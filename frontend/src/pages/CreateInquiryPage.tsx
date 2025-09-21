@@ -1,7 +1,8 @@
 ﻿import { FormEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Lock, Shield, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Lock, Shield, Zap } from "lucide-react";
 import { useMockData } from "../context/MockDataContext";
+import { cn } from "../lib/utils";
 
 const steps = [
   { key: "wallet", label: "Wallet prep" },
@@ -12,6 +13,7 @@ const steps = [
 export const CreateInquiryPage = () => {
   const navigate = useNavigate();
   const { wallet, wrapEth, createInquiry } = useMockData();
+  const isCreator = wallet.role === "creator";
   const [stepIndex, setStepIndex] = useState(0);
   const [formState, setFormState] = useState({
     title: "",
@@ -22,7 +24,10 @@ export const CreateInquiryPage = () => {
     hint: "keccak256:0xfeed..."
   });
 
-  const parsedTraits = useMemo(() => formState.traits.split(",").map((tag) => tag.trim()).filter(Boolean), [formState.traits]);
+  const parsedTraits = useMemo(
+    () => formState.traits.split(",").map((tag) => tag.trim()).filter(Boolean),
+    [formState.traits]
+  );
   const canContinue = useMemo(() => {
     if (stepIndex === 0) {
       return wallet.wethBalance >= formState.deposit;
@@ -33,11 +38,15 @@ export const CreateInquiryPage = () => {
     return true;
   }, [formState.deposit, formState.goal.length, formState.title.length, parsedTraits.length, stepIndex, wallet.wethBalance]);
 
-  const goNext = () => setStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
+  const goNext = () => {
+    if (!isCreator) return;
+    setStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
+  };
   const goPrev = () => setStepIndex((prev) => Math.max(prev - 1, 0));
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
+    if (!isCreator) return;
     const created = createInquiry({
       title: formState.title,
       goal: formState.goal,
@@ -51,7 +60,7 @@ export const CreateInquiryPage = () => {
 
   return (
     <div className="space-y-8">
-      <header className="flex items-center justify-between gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200">
             <ArrowLeft className="h-4 w-4" />
@@ -71,6 +80,15 @@ export const CreateInquiryPage = () => {
           </ul>
         </div>
       </header>
+
+      {!isCreator && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            <span>Researcher view is read-only. Switch to the Creator role via the header toggle to draft an inquiry.</span>
+          </div>
+        </div>
+      )}
 
       <ol className="flex flex-wrap gap-3 text-xs uppercase tracking-wide text-slate-500">
         {steps.map((step, index) => (
@@ -129,8 +147,9 @@ export const CreateInquiryPage = () => {
                 </label>
                 <button
                   type="button"
-                  onClick={() => wrapEth(0.15)}
-                  className="inline-flex items-center gap-2 rounded border border-soma-teal/60 bg-slate-900 px-4 py-2 font-medium text-soma-teal transition hover:bg-slate-800"
+                  onClick={() => isCreator && wrapEth(0.15)}
+                  disabled={!isCreator}
+                  className="inline-flex items-center gap-2 rounded border border-soma-teal/60 bg-slate-900 px-4 py-2 font-medium text-soma-teal transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
                 >
                   Wrap via demo task
                   <Zap className="h-4 w-4" />
@@ -148,9 +167,10 @@ export const CreateInquiryPage = () => {
                 <input
                   type="text"
                   value={formState.title}
+                  readOnly={!isCreator}
                   onChange={(event) => setFormState((prev) => ({ ...prev, title: event.target.value }))}
                   placeholder="e.g. Long COVID metabolome drift"
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 disabled:opacity-60"
                   required
                 />
               </label>
@@ -158,10 +178,11 @@ export const CreateInquiryPage = () => {
                 Goal
                 <textarea
                   value={formState.goal}
+                  readOnly={!isCreator}
                   onChange={(event) => setFormState((prev) => ({ ...prev, goal: event.target.value }))}
                   rows={4}
                   placeholder="Outline the objective, deliverables, and expected outcome."
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 disabled:opacity-60"
                   required
                 />
               </label>
@@ -170,17 +191,19 @@ export const CreateInquiryPage = () => {
                 <input
                   type="text"
                   value={formState.traits}
+                  readOnly={!isCreator}
                   onChange={(event) => setFormState((prev) => ({ ...prev, traits: event.target.value }))}
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 disabled:opacity-60"
                 />
               </label>
               <label className="block text-sm text-slate-300">
                 Safety notes
                 <textarea
                   value={formState.safety}
+                  readOnly={!isCreator}
                   onChange={(event) => setFormState((prev) => ({ ...prev, safety: event.target.value }))}
                   rows={3}
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 disabled:opacity-60"
                 />
               </label>
               <label className="block text-sm text-slate-300">
@@ -188,8 +211,9 @@ export const CreateInquiryPage = () => {
                 <input
                   type="text"
                   value={formState.hint}
+                  readOnly={!isCreator}
                   onChange={(event) => setFormState((prev) => ({ ...prev, hint: event.target.value }))}
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-100"
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-100 disabled:opacity-60"
                 />
               </label>
               <label className="block text-sm text-slate-300">
@@ -199,8 +223,9 @@ export const CreateInquiryPage = () => {
                   min="0.01"
                   step="0.001"
                   value={formState.deposit}
+                  readOnly={!isCreator}
                   onChange={(event) => setFormState((prev) => ({ ...prev, deposit: Number(event.target.value) }))}
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100"
+                  className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 disabled:opacity-60"
                 />
                 <p className="mt-1 text-xs text-slate-500">Recommended demo deposit: 0.01 WETH</p>
               </label>
@@ -297,7 +322,7 @@ export const CreateInquiryPage = () => {
                 <button
                   type="button"
                   onClick={goNext}
-                  disabled={!canContinue}
+                  disabled={!isCreator || !canContinue}
                   className="inline-flex items-center justify-center gap-2 rounded border border-soma-teal/60 bg-slate-900 px-4 py-2 font-medium text-soma-teal transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
                 >
                   Continue
@@ -307,7 +332,8 @@ export const CreateInquiryPage = () => {
               {stepIndex === steps.length - 1 && (
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-2 rounded border border-soma-lime/60 bg-slate-900 px-4 py-2 font-medium text-soma-lime transition hover:bg-slate-800"
+                  disabled={!isCreator}
+                  className="inline-flex items-center justify-center gap-2 rounded border border-soma-lime/60 bg-slate-900 px-4 py-2 font-medium text-soma-lime transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
                 >
                   Simulate createInquiry
                 </button>

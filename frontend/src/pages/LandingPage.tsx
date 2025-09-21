@@ -18,37 +18,66 @@ const heroPoints = [
 ];
 
 export const LandingPage = () => {
-  const { inquiries } = useMockData();
+  const { inquiries, wallet } = useMockData();
   const activeInquiries = inquiries.filter((inq) => inq.status !== "completed").slice(0, 3);
+  const isCreator = wallet.role === "creator";
+  const roleLabel = isCreator ? "Creator view" : wallet.role === "researcher" ? "Researcher view" : "Viewer mode";
 
   return (
     <div className="space-y-12">
       <section className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/60 p-8 shadow-glow before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_left,rgba(34,225,255,0.18),transparent_55%)]">
         <div className="relative z-10 grid gap-10 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full border border-soma-teal/40 bg-slate-900/60 px-3 py-1 text-xs font-mono uppercase tracking-wide text-soma-teal">
-              Base Sepolia · chainId 84532
-            </span>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-soma-teal/40 bg-slate-900/60 px-3 py-1 text-xs font-mono uppercase tracking-wide text-soma-teal">
+                Base Sepolia // chainId 84532
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1 text-[11px] uppercase tracking-wide text-slate-300">
+                {roleLabel}
+              </span>
+            </div>
             <h1 className="text-3xl font-semibold text-slate-100 sm:text-4xl">
               Coordinate high-trust research inquiries with treasury-grade clarity.
             </h1>
             <p className="max-w-2xl text-slate-300">
-              Soma Inquiry pairs deterministic on-chain staking with encrypted knowledge exchange. This prototype walks end-to-end through intake, initiation, acceptance, worthy tagging, and settlement - all while keeping creators and researchers in sync.
+              {isCreator
+                ? "Soma Inquiry pairs deterministic on-chain staking with encrypted knowledge exchange. Draft an inquiry, monitor initiations, and walk through completion states in one place."
+                : "Soma Inquiry highlights which opportunities are ready for researcher initiations, their stake requirements, and how penalties recycle through the treasury."}
             </p>
             <div className="flex flex-wrap gap-3 text-sm">
-              <Link
-                to="/intake"
-                className="inline-flex items-center gap-2 rounded border border-soma-lime/60 bg-slate-900 px-4 py-2 font-medium text-soma-lime transition hover:bg-slate-800"
-              >
-                Launch intake flow
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/researcher/queue"
-                className="inline-flex items-center gap-2 rounded border border-slate-700 px-4 py-2 text-slate-300 transition hover:border-soma-teal/60 hover:text-soma-teal"
-              >
-                Browse researcher queue
-              </Link>
+              {isCreator ? (
+                <>
+                  <Link
+                    to="/intake"
+                    className="inline-flex items-center gap-2 rounded border border-soma-lime/60 bg-slate-900 px-4 py-2 font-medium text-soma-lime transition hover:bg-slate-800"
+                  >
+                    Launch intake flow
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/researcher/queue"
+                    className="inline-flex items-center gap-2 rounded border border-slate-700 px-4 py-2 text-slate-300 transition hover:border-soma-teal/60 hover:text-soma-teal"
+                  >
+                    Browse researcher queue
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/researcher/queue"
+                    className="inline-flex items-center gap-2 rounded border border-soma-teal/60 bg-slate-900 px-4 py-2 font-medium text-soma-teal transition hover:bg-slate-800"
+                  >
+                    Explore open inquiries
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/intake"
+                    className="inline-flex items-center gap-2 rounded border border-slate-700 px-4 py-2 text-slate-300 transition hover:border-soma-lime/60 hover:text-soma-lime"
+                  >
+                    View creator flow
+                  </Link>
+                </>
+              )}
             </div>
           </div>
           <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-5 text-sm">
