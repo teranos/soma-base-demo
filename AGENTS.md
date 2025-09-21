@@ -1,30 +1,43 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-Soma Base currently provides a clean slate; contributions should adopt the following scaffold:
-- `agents/<agent-name>/` for each autonomous workflow, with `__init__.py` or `index.ts` depending on language and a short `README.md` describing responsibilities.
-- `packages/` for shared libraries or models that multiple agents reuse.
-- `configs/` for runtime configuration, prompts, and environment templates.
-- `tests/` mirroring the directory tree of the code under test.
-- `docs/` for design notes or diagrams referenced by multiple agents.
-Keep assets such as fixtures or mock data in `tests/fixtures/` to keep runtime packages lean.
+## Base Sepolia Deployment Map
+All contracts are live on Base Sepolia and mirrored in `.env` for deterministic reuse:
+- Treasury: `0xa7ac4B665e756Ce1575eFDC902Dc2C00bfE8e959`
+- Registry: `0xbC6F9458304d1e951CF953ac9AB567Bd5E185Fc0`
+- InquiryManager: `0x7BC30f2409e1790eA37Fc9BB9851d29ccaf942C2`
+- EscrowVault: `0xdFC33798720367F430fc58d662f56a3Edf5e00C3`
+The canonical 18-decimal incentive token is Base WETH: `0x4200000000000000000000000000000000000006`.
 
-## Build, Test, and Development Commands
-Wrap all developer commands in the project `Makefile` once created. Standard targets should include:
-- `make bootstrap` — create the virtualenv or node_modules and install pinned dependencies.
-- `make format` — run the formatter (e.g., `black`, `ruff`, or `prettier`) over code and prompt assets.
-- `make test` — execute the automated test suite with verbose output.
-- `make check` — aggregate formatting, linting, and unit tests for CI parity.
-Local experiments belong in notebooks inside `notebooks/` and must not modify production assets.
+## Project Layout
+- `contracts/` — Solidity sources (Treasury, Registry, Math library, Vault, InquiryManager).
+- `scripts/` — TypeScript ops: deploy, demo flow, nonce/code inspection, registry configuration, ETH→WETH wrapper.
+- `hardhat.config.ts` — Hardhat + TypeScript config with Base/Base Sepolia networks and custom `wrap` task.
+- `README.md` — Setup instructions, verification notes, demo walkthrough.
+- `.env` — Secrets + live contract addresses (`EXISTING_*`, `MANAGER_ADDRESS`, etc.).
+- `artifacts/`, `cache/` — Generated build output (gitignored).
 
-## Coding Style & Naming Conventions
-Follow PEP 8 for Python components and default ESLint + Prettier rules for TypeScript. Use 4 spaces for Python and 2 spaces for TypeScript/JSON/YAML. Agents and packages use kebab-case directory names (`agents/sequence-builder`); classes are PascalCase; functions and files are snake_case. Keep prompt files `.md` or `.txt` with descriptive prefixes (`prompt.collect_medical_history.md`). Run `make format` before every commit.
+## Dev Commands
+```bash
+npm install
+npx hardhat compile
+HARDHAT_GLOBAL_DIR=.hardhat-global HARDHAT_USER_HOME=.hardhat BUIDLER_USER_HOME=.hardhat \
+  npx hardhat wrap --amount 0.2 --network baseSepolia
+HARDHAT_GLOBAL_DIR=.hardhat-global HARDHAT_USER_HOME=.hardhat BUIDLER_USER_HOME=.hardhat \
+  npx hardhat run --network baseSepolia scripts/demo-flow.ts
+```
+`npm run deploy:basesepolia` reuses live addresses when `EXISTING_*` is set, so only unset variables to redeploy selectively.
 
-## Testing Guidelines
-Adopt `pytest` with `pytest-cov` for Python and `vitest` for TypeScript agents. Name tests `test_<unit>` and mirror package paths (`tests/agents/sequence_builder/test_controller.py`). Aim for ≥85% coverage; add regression tests for every bug fix. Use `.env.test` for deterministic integration runs and avoid hitting external network services—mock them via fixtures.
+## Coding & Testing Practices
+- Solidity ^0.8.24 using OpenZeppelin Ownable, IERC20, ReentrancyGuard; enable the optimizer (200 runs).
+- State-changing flows emit detailed events for off-chain monitoring.
+- Keep deterministic integer math via `SomaMath` helpers; vault isolates token custody.
+- Write tests in Hardhat/TypeScript (future work); scripts double as integration fixtures today.
 
-## Commit & Pull Request Guidelines
-Write commits in imperative mood (`Add sequence builder agent scaffold`). Keep commits focused and include rationale in the body when introducing new behaviours. Pull requests need: summary of intent, linked issues or tickets, test evidence (`make check` output), and screenshots or terminal captures when UI/CLI output changes. Draft PRs are encouraged for early feedback; mark TODOs with `TODO(username):` notes and resolve before requesting review.
+## Environment & Secrets
+- `.env` must only exist locally; never commit private keys or BaseScan API keys.
+- When sharing references, only point to public addresses; rotate keys if PLAINTEXT is ever exposed.
 
-## Security & Configuration Tips
-Never commit secrets; rely on `.env.example` to document required variables. Review third-party dependencies before adding them to `requirements.txt` or `package.json`. For agents that call external APIs, provide throttle guards and timeout defaults, and document required scopes in `docs/integrations.md`.
+## Git & PR Flow
+- `main` tracks `origin/main` (`git@github.com:teranos/soma-base-demo.git`).
+- Commits: imperative subject (`Add inquiry demo script`), meaningful body when required.
+- PRs should include deployment links (BaseScan), console logs from `scripts/demo-flow.ts`, and any scope-limiting assumptions.
