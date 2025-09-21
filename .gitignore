@@ -1,0 +1,22 @@
+# Node dependencies
+node_modules/
+
+# Hardhat build outputs
+artifacts/
+cache/
+.hardhat/
+.hardhat-global/
+
+# Environment config
+.env
+.env.*
+
+# Misc IDE / OS files
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Hardhat temp files
+.hardhat-node/
