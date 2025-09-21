@@ -28,6 +28,7 @@ All contracts are deployed on **Base Sepolia** (chainId `84532`). RPC for local 
 3. Call `InquiryManager.createInquiry(WETH, amount, hintBytes32)` (no ETH value). Prereqs:
    - `WETH.approve(EscrowVault, amount)`
    - Validate registry allowlist: token already enabled for WETH.
+   - Recommended demo deposit: **0.01 WETH** (adjust UI default accordingly).
 4. Success state shows:
    - Inquiry ID (incremental `nextId` returned via event `InquiryCreated(id, ...)`).
    - Public hint (decoded).
