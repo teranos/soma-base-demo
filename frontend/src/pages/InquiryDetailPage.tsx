@@ -235,7 +235,7 @@ export const InquiryDetailPage = () => {
           </div>
 
           <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-slate-100">Initiations</h2>
               {canComplete && wallet.role === "creator" ? (
                 <button
@@ -295,7 +295,7 @@ export const InquiryDetailPage = () => {
             <ol className="mt-4 space-y-4 text-sm text-slate-300">
               {timeline.map((event) => (
                 <li key={event.id} className="rounded border border-slate-800/60 bg-slate-950/60 p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="font-semibold text-slate-100">{event.label}</p>
                     <p className="text-xs text-slate-500">{new Date(event.timestamp).toLocaleString()}</p>
                   </div>
@@ -381,7 +381,7 @@ export const InquiryDetailPage = () => {
                   {fulfilledRequests.length ? (
                     fulfilledRequests.map((req) => (
                       <div key={req.id} className="rounded border border-slate-800/60 bg-slate-950/60 p-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="font-semibold text-slate-100">{req.label}</p>
                           <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] uppercase text-slate-500">
                             {req.status}

@@ -138,7 +138,7 @@ export const LandingPage = () => {
               key={inq.id}
               className="group rounded-xl border border-slate-800/70 bg-slate-950/70 p-5 transition hover:border-soma-teal/60"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                 <span className="font-mono">#{inq.id}</span>
                 <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide">
                   {inq.status === "created" ? "Draft" : "Active"}

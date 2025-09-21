@@ -90,7 +90,7 @@ export const ResearcherQueuePage = () => {
               <p className="text-xs uppercase tracking-wide text-slate-500">Recent initiations</p>
               <div className="space-y-3">
                 {inquiry.initiations.slice(-3).reverse().map((init) => (
-                  <div key={init.id} className="flex items-center justify-between rounded border border-slate-800/60 bg-slate-950/60 px-4 py-3">
+                  <div key={init.id} className="flex flex-wrap items-center justify-between gap-3 rounded border border-slate-800/60 bg-slate-950/60 px-4 py-3">
                     <div>
                       <p className="text-sm font-medium text-slate-100">{init.ens ?? init.researcher}</p>
                       <p className="text-xs text-slate-500">{new Date(init.updatedAt).toLocaleString()}</p>
