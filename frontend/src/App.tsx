@@ -1,4 +1,5 @@
-﻿import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Navbar } from "./components/Navbar";
 import { LandingPage } from "./pages/LandingPage";
 import { CreateInquiryPage } from "./pages/CreateInquiryPage";
@@ -7,10 +8,23 @@ import { InquiryDetailPage } from "./pages/InquiryDetailPage";
 import { ToastViewport } from "./components/ToastViewport";
 import AnimatedShaderBackground from "@/components/ui/animated-shader-background";
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100">
       <AnimatedShaderBackground />
+      <ScrollToTop />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,#1f2937_0,#020617_55%)] opacity-80" aria-hidden />
       <div className="relative z-10 flex min-h-screen flex-col">
         <Navbar />
