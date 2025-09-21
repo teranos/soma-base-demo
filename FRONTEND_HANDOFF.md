@@ -43,6 +43,8 @@ All contracts are deployed on **Base Sepolia** (chainId `84532`). RPC for local 
    - `Initiated` event provides `amount` and next required amount (pre-computed).
 3. Creator reviews initiations per inquiry:
    - Accept: `InquiryManager.acceptInitiation(id, idx)` (no funds move, marks accepted).
+     - Immediately after acceptance, open a secure off-chain channel (e.g., end-to-end encrypted chat modal) between the creator and the accepted researcher. Both parties should see a notification/badge indicating the channel is live.
+     - Within that channel, researchers can request supplemental data (additional `.vcf`, `.fasta`, longitudinal metrics, etc.) and the creator can respond or attach files/links. Log the interaction locally; only hashes or encrypted references should touch the chain.
    - Reject (pre-acceptance): `InquiryManager.rejectInitiation(id, idx)` --> automatically refunds ~90%, splits penalty per registry settings (logs `InitiationRejected`). UI should show refund/penalty amounts.
    - Mark worthy: `InquiryManager.markWorthy(id, idx)`; mark unworthy: `InquiryManager.markUnworthyAndRefund(id, idx)` (80% refund by default + penalty logic). Both emit events with refund/penalty breakdown and update total incentive (pool grows by penalty poolPart).
 4. Completion: once at least one accepted initiation is marked worthy and no accepted entries remain unresolved, allow creator to call `InquiryManager.complete(id)`:
@@ -70,6 +72,7 @@ Display treasury address or link for transparency.
 - **Landing:** Quick explainer of Soma Inquiry, link to create inquiry, link to researcher console.
 - **Create Inquiry Wizard:** Multi-step form culminating in deposit + on-chain tx.
 - **Inquiry Detail:** Combine creator & researcher view with tabs (Overview, Initiations, Worthy Outcomes, Activity log). Listen to events for live updates.
+- **Secure Channel Drawer:** When an initiation is accepted, surface an encrypted chat/file-share drawer tied to that researcher. Include request templates ("Upload additional lab values", "Share raw sequencing"), status tags (Requested, Fulfilled), and a reminder that only hashed references should appear on-chain.
 - **Researcher Queue:** Table/grid of open inquiries with computed next required amount and quick "Initiate" button (with confirm modal showing WETH stake requirement).
 - **Treasury Dashboard (optional):** Show aggregated penalties and ability for owner to view sweep state (future admin UI).
 
