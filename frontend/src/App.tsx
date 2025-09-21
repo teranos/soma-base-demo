@@ -5,11 +5,13 @@ import { CreateInquiryPage } from "./pages/CreateInquiryPage";
 import { ResearcherQueuePage } from "./pages/ResearcherQueuePage";
 import { InquiryDetailPage } from "./pages/InquiryDetailPage";
 import { ToastViewport } from "./components/ToastViewport";
+import AnimatedShaderBackground from "@/components/ui/animated-shader-background";
 
 const App = () => {
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,#1f2937_0,#020617_55%)] opacity-90" aria-hidden />
+      <AnimatedShaderBackground />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,#1f2937_0,#020617_55%)] opacity-80" aria-hidden />
       <div className="relative z-10 flex min-h-screen flex-col">
         <Navbar />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-8 sm:px-6 lg:px-8">

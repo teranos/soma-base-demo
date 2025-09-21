@@ -26,3 +26,12 @@ a {
 ::-webkit-scrollbar-track {
   background-color: rgba(15, 23, 42, 0.7);
 }
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
