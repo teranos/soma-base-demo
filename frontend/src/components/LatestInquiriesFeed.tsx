@@ -54,7 +54,7 @@ export const LatestInquiriesFeed = () => {
         {entries.map((entry) => (
           <Link
             key={entry.id}
-            to={`/inquiry/${entry.inquiryId}`}
+            to={`/researcher/inquiries/${entry.inquiryId}`}
             className="flex flex-col gap-2 rounded-xl border border-slate-800/60 bg-slate-950/80 px-4 py-3 text-sm text-slate-300 transition hover:border-soma-teal/60"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">

@@ -4,12 +4,13 @@ import { Menu, X } from "lucide-react";
 import clsx from "clsx";
 
 import { WalletBadge } from "./WalletBadge";
-import { RoleToggle } from "./RoleToggle";
+import somaLogo from "../../Soma_logo.png";
 
 const navItems = [
   { to: "/", label: "Overview" },
-  { to: "/intake", label: "Create Inquiry" },
-  { to: "/researcher/queue", label: "Researcher Queue" }
+  { to: "/user", label: "User" },
+  { to: "/researcher", label: "Researcher" },
+  { to: "/treasurer", label: "Treasurer" }
 ];
 
 export const Navbar = () => {
@@ -23,14 +24,13 @@ export const Navbar = () => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <NavLink to="/" className="flex items-center gap-2 text-soma-teal" onClick={closeMenu}>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-soma-teal/60 bg-slate-900 font-mono text-sm font-semibold">
-              SI
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-soma-teal/60 bg-slate-900">
+              <img src={somaLogo} alt="Soma" className="h-6 w-6" />
             </span>
-            <span className="text-sm font-semibold tracking-wide text-slate-200">Soma Inquiry Console</span>
+            <span className="text-sm font-semibold tracking-wide text-slate-200">Soma</span>
           </NavLink>
           <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-3 md:flex">
-              <RoleToggle />
+            <div className="hidden md:flex">
               <WalletBadge />
             </div>
             <button
@@ -82,8 +82,7 @@ export const Navbar = () => {
           </nav>
         ) : null}
 
-        <div className="flex flex-col gap-3 md:hidden">
-          <RoleToggle />
+        <div className="md:hidden">
           <WalletBadge />
         </div>
       </div>

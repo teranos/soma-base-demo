@@ -1,47 +1,48 @@
-﻿import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
   FileCode,
   MessageSquare,
   Send,
   ShieldCheck,
-  Terminal,
-  TimerReset
+  Sparkles
 } from "lucide-react";
+
 import { useMockData } from "../context/MockDataContext";
 import { Initiation, SecureRequest } from "../lib/types";
 
 const statusRail = [
   { key: "created", label: "Created" },
-  { key: "initiated", label: "Initiated" },
-  { key: "accepted", label: "Accepted" },
-  { key: "worthy", label: "Worthy" },
   { key: "completed", label: "Completed" }
 ];
 
 const requestTemplates: Array<{ id: string; label: string; detail: string; status: SecureRequest["status"] }> = [
   {
     id: "template-0",
-    label: "Upload raw datasets",
-    detail: "Share encrypted archive. Hash required in channel.",
+    label: "Request encrypted dataset",
+    detail: "Share the encrypted archive referenced by your data hash.",
     status: "requested",
     updatedAt: new Date().toISOString()
   },
   {
     id: "template-1",
-    label: "Provide consent forms",
-    detail: "Mask all direct identifiers before upload.",
+    label: "Confirm peptide assay",
+    detail: "Clarify assay units and collection protocol to align analysis.",
     status: "requested",
     updatedAt: new Date().toISOString()
   }
 ];
 
-export const InquiryDetailPage = () => {
+interface InquiryDetailPageProps {
+  persona?: "user" | "researcher";
+}
+
+export const InquiryDetailPage = ({ persona = "user" }: InquiryDetailPageProps) => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id, initId } = useParams<{ id: string; initId?: string }>();
   const {
     inquiries,
     wallet,
@@ -57,10 +58,17 @@ export const InquiryDetailPage = () => {
   } = useMockData();
 
   const inquiry = useMemo(() => inquiries.find((item) => item.id === id), [id, inquiries]);
-  const [selectedInitiationId, setSelectedInitiationId] = useState<string | undefined>(undefined);
+  const [selectedInitiationId, setSelectedInitiationId] = useState<string | undefined>(initId);
   const [messageDraft, setMessageDraft] = useState("");
+  const [activityOpen, setActivityOpen] = useState(false);
+  const focusInitiationId = initId;
 
   useEffect(() => {
+    if (focusInitiationId && focusInitiationId !== selectedInitiationId) {
+      setSelectedInitiationId(focusInitiationId);
+      return;
+    }
+
     if (!inquiry) {
       return;
     }
@@ -71,7 +79,7 @@ export const InquiryDetailPage = () => {
     } else if (!inquiry.initiations.some((init) => init.id === selectedInitiationId)) {
       setSelectedInitiationId(inquiry.initiations[0]?.id);
     }
-  }, [inquiry, selectedInitiationId]);
+  }, [focusInitiationId, inquiry, selectedInitiationId]);
 
   if (!inquiry) {
     return (
@@ -90,7 +98,21 @@ export const InquiryDetailPage = () => {
   const selectedInitiation = inquiry.initiations.find((init) => init.id === selectedInitiationId);
   const timeline = inquiry.timeline;
 
-  const canComplete = inquiry.status !== "completed" && inquiry.initiations.some((init) => init.status === "worthy");
+  const isUserView = persona === "user";
+  const isResearcherView = persona === "researcher";
+  const isOwner = wallet.address === inquiry.creator;
+  const baseRoute = isResearcherView ? "/researcher" : "/user";
+  const canComplete =
+    isUserView &&
+    isOwner &&
+    inquiry.status !== "completed" &&
+    inquiry.initiations.some((init) => init.status === "worthy");
+
+  const statusActive = (key: string) => {
+    if (key === "created") return true;
+    if (key === "completed") return inquiry.status === "completed";
+    return false;
+  };
 
   const handleSendMessage = (event: FormEvent) => {
     event.preventDefault();
@@ -106,10 +128,8 @@ export const InquiryDetailPage = () => {
     setMessageDraft("");
   };
 
-  const fulfilledRequests = (selectedInitiation && inquiry.secureRequests[selectedInitiation.id]) || [];
-
   const renderActionButtons = (initiation: Initiation) => {
-    if (wallet.role !== "creator" || inquiry.status === "completed") {
+    if (!isUserView || !isOwner || inquiry.status === "completed") {
       return null;
     }
     if (initiation.status === "pending") {
@@ -132,7 +152,7 @@ export const InquiryDetailPage = () => {
     }
     if (initiation.status === "accepted") {
       return (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => openSecureChannel(inquiry.id, initiation.id)}
             className="rounded border border-soma-teal/60 px-3 py-1.5 text-xs text-soma-teal transition hover:bg-slate-900"
@@ -155,20 +175,54 @@ export const InquiryDetailPage = () => {
       );
     }
     if (initiation.status === "worthy") {
-      return (
-        <p className="text-xs text-slate-500">Awaiting completion</p>
-      );
+      return <p className="text-xs text-slate-500">Ready for completion</p>;
     }
     return null;
   };
 
-  const statusActive = (key: string) => {
-    if (key === "created") return true;
-    if (key === "initiated") return inquiry.initiations.length > 0;
-    if (key === "accepted") return inquiry.initiations.some((init) => init.status === "accepted" || init.status === "worthy");
-    if (key === "worthy") return inquiry.initiations.some((init) => init.status === "worthy");
-    if (key === "completed") return inquiry.status === "completed";
-    return false;
+  const fulfilledRequests = (selectedInitiation && inquiry.secureRequests[selectedInitiation.id]) || [];
+
+  const handleTemplateRequest = (template: (typeof requestTemplates)[number]) => {
+    if (!selectedInitiation) return;
+    addSecureRequest(inquiry.id, selectedInitiation.id, {
+      label: template.label,
+      detail: template.detail,
+      status: template.status
+    });
+  };
+
+  const renderInitiationCard = (initiation: Initiation) => {
+    return (
+      <>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-200">
+          <div>
+            <p className="font-medium text-slate-100">{initiation.ens ?? initiation.researcher}</p>
+            <p className="text-xs text-slate-500">{new Date(initiation.updatedAt).toLocaleString()}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-mono text-xs text-slate-400">Stake {initiation.amount.toFixed(3)} WETH</p>
+            <p className="text-xs capitalize text-slate-300">{initiation.status}</p>
+          </div>
+        </div>
+        <div className="mt-3 text-xs text-slate-400">{renderActionButtons(initiation)}</div>
+        {initiation.refund ? (
+          <div className="mt-3 grid gap-2 rounded border border-slate-800/60 bg-slate-950/70 p-3 text-xs text-slate-400 sm:grid-cols-3">
+            <div>
+              <p className="text-slate-500">Refund</p>
+              <p className="font-mono text-slate-200">{initiation.refund.toFixed(3)} WETH</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Treasury</p>
+              <p className="font-mono text-slate-200">{(initiation.treasuryCut ?? 0).toFixed(3)} WETH</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Pool top up</p>
+              <p className="font-mono text-slate-200">{(initiation.poolTopUp ?? 0).toFixed(3)} WETH</p>
+            </div>
+          </div>
+        ) : null}
+      </>
+    );
   };
 
   return (
@@ -180,43 +234,36 @@ export const InquiryDetailPage = () => {
         </button>
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
-            <div className="flex items-center gap-3">
-              <span className="rounded-full border border-slate-700 px-2 py-1 text-xs font-mono">#{inquiry.id}</span>
-              <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase tracking-wide text-slate-400">
-                {inquiry.status === "completed" ? "Completed" : "Active"}
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="rounded-full border border-slate-700 px-2 py-1 font-mono">#{inquiry.id}</span>
+              <span className="rounded-full border border-slate-700 px-3 py-1 uppercase tracking-wide">
+                {persona === "user" ? "User view" : "Researcher view"}
               </span>
             </div>
-            <h1 className="mt-3 text-3xl font-semibold text-slate-100">{inquiry.title}</h1>
+            <h1 className="mt-3 text-3xl font-semibold text-slate-100">{inquiry.publicHint}</h1>
             <p className="mt-3 max-w-3xl text-sm text-slate-300">{inquiry.goal}</p>
           </div>
           <div className="grid gap-3 text-sm text-slate-200 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-800/70 bg-slate-950/70 p-4">
-              <p className="text-slate-400">Creator deposit</p>
+              <p className="text-slate-400">Deposit</p>
               <p className="mt-2 font-mono text-lg">{inquiry.deposit.toFixed(3)} WETH</p>
             </div>
             <div className="rounded-xl border border-slate-800/70 bg-slate-950/70 p-4">
-              <p className="text-slate-400">Total incentive</p>
+              <p className="text-slate-400">Incentive pool</p>
               <p className="mt-2 font-mono text-lg">{inquiry.totalIncentive.toFixed(3)} WETH</p>
             </div>
             <div className="rounded-xl border border-slate-800/70 bg-slate-950/70 p-4">
-              <p className="text-slate-400">Next initiation</p>
+              <p className="text-slate-400">Next stake</p>
               <p className="mt-2 font-mono text-lg">{inquiry.nextRequired.toFixed(3)} WETH</p>
             </div>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          {inquiry.traits.map((trait) => (
-            <span key={trait} className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">
-              {trait}
-            </span>
-          ))}
         </div>
       </header>
 
       <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Status rail</h2>
+            <h2 className="text-lg font-semibold text-slate-100">Status</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               {statusRail.map((step) => (
                 <div
@@ -237,7 +284,7 @@ export const InquiryDetailPage = () => {
           <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-slate-100">Initiations</h2>
-              {canComplete && wallet.role === "creator" ? (
+              {canComplete ? (
                 <button
                   onClick={() => completeInquiry(inquiry.id)}
                   className="inline-flex items-center gap-2 rounded border border-soma-lime/60 px-3 py-1.5 text-xs font-medium text-soma-lime transition hover:bg-slate-900"
@@ -248,82 +295,100 @@ export const InquiryDetailPage = () => {
               ) : null}
             </div>
             <div className="mt-4 space-y-3">
-              {inquiry.initiations.map((init) => (
-                <button
-                  key={init.id}
-                  onClick={() => setSelectedInitiationId(init.id)}
-                  className={`w-full rounded-xl border px-4 py-4 text-left transition ${
-                    selectedInitiationId === init.id ? "border-soma-teal/60 bg-slate-950" : "border-slate-800/60 bg-slate-950/50 hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-200">
-                    <div>
-                      <p className="font-medium text-slate-100">{init.ens ?? init.researcher}</p>
-                      <p className="text-xs text-slate-500">{new Date(init.updatedAt).toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-mono text-xs text-slate-400">Stake {init.amount.toFixed(3)} WETH</p>
-                      <p className="text-xs capitalize text-slate-300">{init.status}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-xs text-slate-400">
-                    {renderActionButtons(init)}
-                  </div>
-                  {init.refund ? (
-                    <div className="mt-3 grid gap-2 rounded border border-slate-800/60 bg-slate-950/70 p-3 text-xs text-slate-400 sm:grid-cols-3">
-                      <div>
-                        <p className="text-slate-500">Refund</p>
-                        <p className="font-mono text-slate-200">{init.refund.toFixed(3)} WETH</p>
+              {focusInitiationId
+                ? selectedInitiation ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <span className="font-mono">Initiation #{selectedInitiation.id.slice(0, 6)}</span>
+                        <Link
+                          to={`${baseRoute}/inquiries/${inquiry.id}`}
+                          className="text-soma-teal transition hover:text-soma-lime"
+                        >
+                          Back to inquiry overview
+                        </Link>
                       </div>
-                      <div>
-                        <p className="text-slate-500">Treasury</p>
-                        <p className="font-mono text-slate-200">{(init.treasuryCut ?? 0).toFixed(3)} WETH</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">Pool top up</p>
-                        <p className="font-mono text-slate-200">{(init.poolTopUp ?? 0).toFixed(3)} WETH</p>
-                      </div>
+                      {renderInitiationCard(selectedInitiation)}
                     </div>
-                  ) : null}
-                </button>
-              ))}
+                  ) : (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-200">
+                      Initiation not found. It may have been removed or settled.
+                    </div>
+                  )
+                : inquiry.initiations.map((init) => (
+                    <Link
+                      key={init.id}
+                      to={`${baseRoute}/inquiries/${inquiry.id}/initiations/${init.id}`}
+                      className={`block rounded-xl border px-4 py-4 text-left transition ${
+                        selectedInitiationId === init.id
+                          ? "border-soma-teal/60 bg-slate-950"
+                          : "border-slate-800/60 bg-slate-950/50 hover:border-slate-700"
+                      }`}
+                      onMouseEnter={() => setSelectedInitiationId(init.id)}
+                    >
+                      {renderInitiationCard(init)}
+                    </Link>
+                  ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Activity log</h2>
-            <ol className="mt-4 space-y-4 text-sm text-slate-300">
-              {timeline.map((event) => (
-                <li key={event.id} className="rounded border border-slate-800/60 bg-slate-950/60 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-100">{event.label}</p>
-                    <p className="text-xs text-slate-500">{new Date(event.timestamp).toLocaleString()}</p>
-                  </div>
-                  <p className="mt-2 text-xs text-slate-400">{event.description}</p>
-                </li>
-              ))}
-            </ol>
+          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60">
+            <button
+              type="button"
+              onClick={() => setActivityOpen((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left text-sm font-medium text-slate-200"
+            >
+              Activity log
+              <ChevronDown className={`h-4 w-4 transition ${activityOpen ? "rotate-180" : ""}`} />
+            </button>
+            {activityOpen ? (
+              <ol className="space-y-4 border-t border-slate-800/70 bg-slate-900/40 p-6 text-sm text-slate-300">
+                {timeline.map((event) => (
+                  <li key={event.id} className="rounded border border-slate-800/60 bg-slate-950/60 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="font-semibold text-slate-100">{event.label}</p>
+                      <span className="font-mono text-xs text-slate-500">{new Date(event.timestamp).toLocaleString()}</span>
+                    </div>
+                    <p className="mt-2 text-slate-400">{event.description}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
           </div>
         </div>
 
         <aside className="space-y-6">
-          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
-            <div className="flex items-center gap-2 text-slate-400">
+          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-sm text-slate-300">
+            <h2 className="text-base font-semibold text-slate-100">Data references</h2>
+            <p className="mt-2 text-slate-400">
+              {inquiry.safetyNotes || "No data hash provided yet."}
+            </p>
+            {isResearcherView ? (
+              <p className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                <Sparkles className="h-3.5 w-3.5 text-soma-teal" />
+                Encrypted materials unlock after acceptance.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-sm text-slate-300">
+            <div className="flex items-center gap-2 text-slate-200">
               <MessageSquare className="h-4 w-4 text-soma-teal" />
-              Secure channel
+              Encrypted channel
             </div>
             {selectedInitiation ? (
               <div className="mt-4 space-y-4">
-                <div className="rounded border border-slate-800/60 bg-slate-950/60 p-3 text-xs text-slate-400">
-                  <p className="font-semibold text-slate-200">{selectedInitiation.ens ?? selectedInitiation.researcher}</p>
-                  <p>Status: {selectedInitiation.status}</p>
+                <div className="rounded border border-slate-800/60 bg-slate-950/70 p-3 text-xs text-slate-300">
+                  <p className="font-semibold text-slate-100">Channel with {selectedInitiation.ens ?? selectedInitiation.researcher}</p>
+                  <p className="mt-1 text-slate-500">{selectedInitiation.channelOpen ? "Channel open" : "Awaiting acceptance"}</p>
                 </div>
-                <div className="max-h-72 space-y-3 overflow-y-auto rounded border border-slate-800/60 bg-slate-950/60 p-3 text-xs text-slate-300">
-                  {(inquiry.secureChannels[selectedInitiation.id] ?? []).map((message) => (
-                    <div key={message.id}>
-                      <p className="font-semibold text-slate-200">{message.authorLabel}</p>
-                      <p className="mt-1 text-slate-300">{message.body}</p>
-                      <p className="mt-1 text-[10px] text-slate-500">{new Date(message.timestamp).toLocaleString()}</p>
+                <div className="space-y-3">
+                  {inquiry.secureChannels[selectedInitiation.id]?.map((message) => (
+                    <div key={message.id} className="rounded border border-slate-800/60 bg-slate-950/70 p-3 text-xs text-slate-300">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-100">{message.authorLabel}</span>
+                        <span className="font-mono text-[10px] text-slate-500">{new Date(message.timestamp).toLocaleString()}</span>
+                      </div>
+                      <p className="mt-2 text-slate-400">{message.body}</p>
                     </div>
                   ))}
                   {inquiry.secureChannels[selectedInitiation.id]?.length ? null : (
@@ -352,24 +417,18 @@ export const InquiryDetailPage = () => {
             )}
           </div>
 
-          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
-            <div className="flex items-center gap-2 text-slate-400">
-              <FileCode className="h-4 w-4 text-soma-teal" />
-              Requests
-            </div>
-            {selectedInitiation ? (
-              <div className="mt-4 space-y-4 text-xs text-slate-300">
+          {selectedInitiation ? (
+            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-sm text-slate-300">
+              <div className="flex items-center gap-2 text-slate-200">
+                <FileCode className="h-4 w-4 text-soma-teal" />
+                Requests
+              </div>
+              <div className="mt-4 space-y-4 text-xs">
                 <div className="flex flex-wrap gap-2">
                   {requestTemplates.map((template) => (
                     <button
                       key={template.id}
-                      onClick={() =>
-                      addSecureRequest(inquiry.id, selectedInitiation.id, {
-                        label: template.label,
-                        detail: template.detail,
-                        status: template.status
-                      })
-                    }
+                      onClick={() => handleTemplateRequest(template)}
                       type="button"
                       className="rounded border border-slate-700 px-3 py-1 text-slate-300 transition hover:border-soma-teal/60 hover:text-soma-teal"
                     >
@@ -389,7 +448,7 @@ export const InquiryDetailPage = () => {
                         </div>
                         <p className="mt-2 text-slate-400">{req.detail}</p>
                         <p className="mt-2 text-[10px] text-slate-500">Updated {new Date(req.updatedAt).toLocaleString()}</p>
-                        {wallet.role === "creator" && req.status !== "fulfilled" ? (
+                        {isUserView && isOwner && req.status !== "fulfilled" ? (
                           <button
                             onClick={() => resolveSecureRequest(inquiry.id, selectedInitiation.id, req.id)}
                             className="mt-2 inline-flex items-center gap-2 rounded border border-soma-lime/60 px-3 py-1 text-soma-lime transition hover:bg-slate-900"
@@ -401,59 +460,12 @@ export const InquiryDetailPage = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-slate-500">No active requests.</p>
+                    <p className="text-slate-500">No requests logged for this channel.</p>
                   )}
                 </div>
               </div>
-            ) : (
-              <p className="mt-4 text-sm text-slate-400">Choose an initiation to manage requests.</p>
-            )}
-          </div>
-
-          {inquiry.completionSummary ? (
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-sm text-slate-300">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Terminal className="h-4 w-4 text-soma-teal" />
-                Completion snapshot
-              </div>
-              <dl className="mt-4 space-y-2 text-xs text-slate-400">
-                <div className="flex justify-between">
-                  <dt>Creator cut</dt>
-                  <dd className="font-mono text-slate-200">{inquiry.completionSummary.userCut.toFixed(3)} WETH</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Research pot</dt>
-                  <dd className="font-mono text-slate-200">{inquiry.completionSummary.researchPot.toFixed(3)} WETH</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Worthy researchers</dt>
-                  <dd className="text-slate-200">{inquiry.completionSummary.worthyCount}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Tx hash</dt>
-                  <dd className="font-mono text-slate-200">{inquiry.completionSummary.txHash}</dd>
-                </div>
-              </dl>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-sm text-slate-300">
-              <div className="flex items-center gap-2 text-slate-400">
-                <TimerReset className="h-4 w-4 text-slate-500" />
-                Awaiting completion
-              </div>
-              <p className="mt-3 text-xs text-slate-400">
-                Mark at least one accepted initiation as worthy to enable final settlement. Treasury penalties update automatically as you reject or mark unworthy contributors.
-              </p>
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 text-xs text-amber-200">
-            <div className="flex items-center gap-2 text-amber-300">
-              <AlertTriangle className="h-4 w-4" />
-              Safety note
-            </div>
-            <p className="mt-3 text-amber-200/80">{inquiry.safetyNotes}</p>
-          </div>
+          ) : null}
         </aside>
       </section>
     </div>

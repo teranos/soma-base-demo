@@ -1,13 +1,6 @@
 ﻿import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { inquiriesSeed, demoWallet } from "../data/mockData";
-import {
-  ChatMessage,
-  Inquiry,
-  Initiation,
-  SecureRequest,
-  WalletRole,
-  WalletState
-} from "../lib/types";
+import { ChatMessage, Inquiry, Initiation, SecureRequest, WalletState } from "../lib/types";
 import { useToastContext } from "./ToastContext";
 
 interface CreateInquiryInput {
@@ -23,8 +16,6 @@ interface MockDataContextValue {
   wallet: WalletState;
   inquiries: Inquiry[];
   researchers: { address: string; ens?: string }[];
-  setRole: (role: WalletRole) => void;
-  wrapEth: (amount: number) => void;
   initiateInquiry: (inquiryId: string) => void;
   createInquiry: (input: CreateInquiryInput) => Inquiry;
   acceptInitiation: (inquiryId: string, initiationId: string) => void;
@@ -82,27 +73,6 @@ export const MockDataProvider = ({ children }: { children: ReactNode }) => {
     []
   );
 
-  const setRole = useCallback((role: WalletRole) => {
-    setWallet((prev) => ({ ...prev, role }));
-  }, []);
-
-  const wrapEth = useCallback(
-    (amount: number) => {
-      if (amount <= 0) return;
-      setWallet((prev) => ({
-        ...prev,
-        ethBalance: Number(Math.max(prev.ethBalance - amount, 0).toFixed(3)),
-        wethBalance: Number((prev.wethBalance + amount).toFixed(3))
-      }));
-      pushToast({
-        title: "WETH wrapped",
-        description: `Converted ${amount.toFixed(3)} ETH to WETH on Base Sepolia`,
-        variant: "success"
-      });
-    },
-    [pushToast]
-  );
-
   const createInquiry = useCallback(
     (input: CreateInquiryInput) => {
       let created: Inquiry | null = null;
@@ -130,7 +100,7 @@ export const MockDataProvider = ({ children }: { children: ReactNode }) => {
             {
               id: crypto.randomUUID(),
               label: "Inquiry created",
-              description: `Creator staked ${input.deposit.toFixed(3)} WETH; hint published.`,
+              description: `User staked ${input.deposit.toFixed(3)} WETH; hint published.`,
               timestamp: now,
               kind: "creation"
             }
@@ -370,7 +340,7 @@ export const MockDataProvider = ({ children }: { children: ReactNode }) => {
         next.timeline.unshift({
           id: crypto.randomUUID(),
           label: "Inquiry completed",
-          description: `Creator received ${userCut} WETH; ${worthyCount} worthy researchers paid.`,
+          description: `User received ${userCut} WETH; ${worthyCount} worthy researchers paid.`,
           timestamp,
           kind: "complete"
         });
@@ -380,7 +350,7 @@ export const MockDataProvider = ({ children }: { children: ReactNode }) => {
       });
       pushToast({
         title: "Inquiry settled",
-        description: "Creator cut + research pot distributed",
+        description: "User cut + research pot distributed",
         variant: "success"
       });
     },
@@ -484,8 +454,6 @@ export const MockDataProvider = ({ children }: { children: ReactNode }) => {
       wallet,
       inquiries,
       researchers,
-      setRole,
-      wrapEth,
       initiateInquiry,
       createInquiry,
       acceptInitiation,
@@ -502,8 +470,6 @@ export const MockDataProvider = ({ children }: { children: ReactNode }) => {
       wallet,
       inquiries,
       researchers,
-      setRole,
-      wrapEth,
       initiateInquiry,
       createInquiry,
       acceptInitiation,

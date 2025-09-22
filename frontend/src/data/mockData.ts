@@ -3,7 +3,6 @@ import { Inquiry, WalletState } from "../lib/types";
 export const demoWallet: WalletState = {
   address: "0xA1c7...42f9",
   ens: "biowallet.base",
-  role: "creator",
   ethBalance: 1.82,
   wethBalance: 0.74,
   networkLabel: "Base Sepolia"
@@ -33,7 +32,7 @@ export const inquiriesSeed: Inquiry[] = [
       {
         id: "196-event-0",
         label: "Inquiry drafted",
-        description: "Creator staged 0.018 WETH, waiting on IRB sign-off before opening queue.",
+        description: "User staged 0.018 WETH, waiting on IRB sign-off before opening queue.",
         timestamp: iso(1.4),
         kind: "creation"
       }
@@ -49,7 +48,7 @@ export const inquiriesSeed: Inquiry[] = [
     status: "active",
     goal: "Cross-check serum cytokine spikes against wearable anomalies to pre-empt lupus flares.",
     traits: ["Immunology", "Wearables", "Signal processing"],
-    safetyNotes: "Creator has paused external downloads until HIPAA scrub complete; only hashed payloads permitted.",
+    safetyNotes: "User has paused external downloads until HIPAA scrub complete; only hashed payloads permitted.",
     publicHint: "keccak256:0x549c...",
     deposit: 0.11,
     totalIncentive: 0.31,
@@ -99,7 +98,7 @@ export const inquiriesSeed: Inquiry[] = [
       {
         id: "194-event-0",
         label: "Inquiry created",
-        description: "Creator staked 0.11 WETH; regulatory hold noted.",
+        description: "User staked 0.11 WETH; regulatory hold noted.",
         timestamp: iso(18),
         kind: "creation"
       },
@@ -130,7 +129,7 @@ export const inquiriesSeed: Inquiry[] = [
         {
           id: "194-chat-0",
           author: "creator",
-          authorLabel: "Creator",
+          authorLabel: "User",
           body: "Use masked IDs only; anomaly JSON in channel once IRB clears.",
           timestamp: iso(4.1),
           status: "delivered"
@@ -231,7 +230,7 @@ export const inquiriesSeed: Inquiry[] = [
       {
         id: "191-event-0",
         label: "Inquiry created",
-        description: "Creator locked 0.09 WETH and published HRV schema hash.",
+        description: "User locked 0.09 WETH and published HRV schema hash.",
         timestamp: iso(27),
         kind: "creation"
       },
@@ -272,7 +271,7 @@ export const inquiriesSeed: Inquiry[] = [
         {
           id: "191-chat-1",
           author: "creator",
-          authorLabel: "Creator",
+          authorLabel: "User",
           body: "Need metabolite cluster summary before next milestone.",
           timestamp: iso(3.0),
           status: "sent"
@@ -349,7 +348,7 @@ export const inquiriesSeed: Inquiry[] = [
       {
         id: "event-0",
         label: "Inquiry created",
-        description: "Creator staked 0.15 WETH; hint published.",
+        description: "User staked 0.15 WETH; hint published.",
         timestamp: iso(9),
         kind: "creation"
       },
@@ -380,7 +379,7 @@ export const inquiriesSeed: Inquiry[] = [
         {
           id: "chat-0",
           author: "creator",
-          authorLabel: "Creator",
+          authorLabel: "User",
           body: "Can you confirm coverage of IL-6 across the cohort?",
           timestamp: iso(2.5),
           status: "read"
@@ -398,7 +397,7 @@ export const inquiriesSeed: Inquiry[] = [
         {
           id: "chat-2",
           author: "creator",
-          authorLabel: "Creator",
+          authorLabel: "User",
           body: "Need normalized intensity tables by tomorrow for review.",
           timestamp: iso(1.1),
           status: "sent"
@@ -472,7 +471,7 @@ export const inquiriesSeed: Inquiry[] = [
       {
         id: "173-event-0",
         label: "Inquiry completed",
-        description: "Creator received 0.028 WETH creator cut.",
+        description: "User received 0.028 WETH creator cut.",
         timestamp: iso(20),
         kind: "complete"
       },

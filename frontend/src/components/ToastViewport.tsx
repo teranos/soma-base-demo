@@ -1,9 +1,27 @@
-﻿import { useToast } from "../hooks/useToast";
+﻿import { useEffect } from "react";
+
+import { useToast } from "../hooks/useToast";
 import { X } from "lucide-react";
 import clsx from "clsx";
 
 export const ToastViewport = () => {
-  const { toasts, dismissToast } = useToast();
+  const { toasts, dismissToast, clearToasts } = useToast();
+
+  useEffect(() => {
+    if (toasts.length === 0) {
+      return;
+    }
+
+    const handleScroll = () => {
+      clearToasts();
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [toasts.length, clearToasts]);
 
   if (toasts.length === 0) {
     return null;

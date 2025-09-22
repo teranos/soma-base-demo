@@ -31,7 +31,7 @@ const baseTemplates = [
     value: "0.018 WETH",
     direction: "outbound" as const,
     status: "pending" as const,
-    description: "Creator draw-down queued"
+    description: "User draw-down queued"
   },
   {
     contract: "InquiryManager",

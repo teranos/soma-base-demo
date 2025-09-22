@@ -1,5 +1,3 @@
-﻿export type WalletRole = "creator" | "researcher" | "viewer";
-
 export interface ChatMessage {
   id: string;
   author: string;
@@ -87,7 +85,6 @@ export interface Inquiry {
 export interface WalletState {
   address: string;
   ens?: string;
-  role: WalletRole;
   ethBalance: number;
   wethBalance: number;
   networkLabel: string;
