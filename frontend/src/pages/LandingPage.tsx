@@ -1,6 +1,12 @@
 ﻿import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles, GitBranch } from "lucide-react";
-import { useMockData } from "../context/MockDataContext";
+
+import { LiveDeploymentBanner } from "@/components/LiveDeploymentBanner";
+import { TransactionTicker } from "@/components/TransactionTicker";
+import { LatestInquiriesFeed } from "@/components/LatestInquiriesFeed";
+import { useMockData } from "@/context/MockDataContext";
+import { incentiveTokenAddress, networkMeta, protocolAddresses } from "@/lib/config";
+import { truncateAddress } from "@/lib/utils";
 
 const heroPoints = [
   {
@@ -25,12 +31,14 @@ export const LandingPage = () => {
 
   return (
     <div className="space-y-12">
+      <LiveDeploymentBanner />
+
       <section className="relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/60 p-8 shadow-glow before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_left,rgba(34,225,255,0.18),transparent_55%)]">
         <div className="relative z-10 grid gap-10 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-soma-teal/40 bg-slate-900/60 px-3 py-1 text-xs font-mono uppercase tracking-wide text-soma-teal">
-                Base Sepolia // chainId 84532
+                {networkMeta.label} // chainId {networkMeta.chainId}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1 text-[11px] uppercase tracking-wide text-slate-300">
                 {roleLabel}
@@ -88,80 +96,40 @@ export const LandingPage = () => {
             <dl className="mt-4 space-y-3">
               <div>
                 <dt className="text-xs uppercase tracking-wide text-slate-500">Escrow vault</dt>
-                <dd className="font-mono text-slate-200">0xdFC3...00C3</dd>
+                <dd className="font-mono text-slate-200">{truncateAddress(protocolAddresses.escrowVault, 4)}</dd>
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-slate-500">Token</dt>
-                <dd className="font-mono text-slate-200">WETH · 18 decimals</dd>
+                <dd className="font-mono text-slate-200">WETH (18 decimals)</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500">Init ratio</dt>
-                <dd className="text-slate-200">10% required per researcher (floor rounded)</dd>
+                <dt className="text-xs uppercase tracking-wide text-slate-500">Incentive asset</dt>
+                <dd className="font-mono text-slate-200">{truncateAddress(incentiveTokenAddress, 4)}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500">Penalty split</dt>
-                <dd className="text-slate-200">50% Treasury · 50% Inquiry pool</dd>
+                <dt className="text-xs uppercase tracking-wide text-slate-500">Inquiry manager</dt>
+                <dd className="font-mono text-slate-200">{truncateAddress(protocolAddresses.inquiryManager, 4)}</dd>
               </div>
             </dl>
           </div>
         </div>
-      </section>
-
-      <section className="grid gap-6 md:grid-cols-3">
-        {heroPoints.map((point) => (
-          <div key={point.title} className="rounded-xl border border-slate-800/70 bg-slate-900/60 p-6">
-            <Sparkles className="h-5 w-5 text-soma-teal" />
-            <h2 className="mt-4 text-lg font-semibold text-slate-100">{point.title}</h2>
-            <p className="mt-2 text-sm text-slate-400">{point.description}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-100">Live inquiries</h2>
-            <p className="text-sm text-slate-400">Mocked from Base Sepolia emissions for a hackathon-ready walkthrough.</p>
-          </div>
-          <Link
-            to="/researcher/queue"
-            className="inline-flex items-center gap-2 text-sm text-soma-teal hover:text-soma-lime"
-          >
-            View queue
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {activeInquiries.map((inq) => (
-            <Link
-              to={`/inquiry/${inq.id}`}
-              key={inq.id}
-              className="group rounded-xl border border-slate-800/70 bg-slate-950/70 p-5 transition hover:border-soma-teal/60"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                <span className="font-mono">#{inq.id}</span>
-                <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide">
-                  {inq.status === "created" ? "Draft" : "Active"}
-                </span>
+        <div className="relative z-10 mt-10 grid gap-5 lg:grid-cols-3">
+          {heroPoints.map((point) => (
+            <div key={point.title} className="flex flex-col gap-3 rounded-xl border border-slate-800/60 bg-slate-950/70 p-5">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-400">
+                <Sparkles className="h-3.5 w-3.5 text-soma-teal" />
+                {point.title}
               </div>
-              <h3 className="mt-3 text-base font-semibold text-slate-100 group-hover:text-soma-teal">
-                {inq.title}
-              </h3>
-              <p className="mt-2 line-clamp-3 text-sm text-slate-400">{inq.goal}</p>
-              <dl className="mt-4 space-y-2 text-xs text-slate-400">
-                <div className="flex justify-between">
-                  <dt>Total incentive</dt>
-                  <dd className="font-mono text-slate-200">{inq.totalIncentive.toFixed(3)} WETH</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Next initiation</dt>
-                  <dd className="font-mono text-slate-200">{inq.nextRequired.toFixed(3)} WETH</dd>
-                </div>
-              </dl>
-            </Link>
+              <p className="text-sm text-slate-400">{point.description}</p>
+            </div>
           ))}
         </div>
       </section>
+
+      <div className="grid gap-6 lg:grid-cols-[1.1fr,1fr]">
+        <TransactionTicker />
+        <LatestInquiriesFeed />
+      </div>
 
       <section className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
         <div className="flex flex-wrap items-center gap-3 text-slate-400">
@@ -195,6 +163,43 @@ export const LandingPage = () => {
             <p className="mt-2 text-slate-400">Creator cut + research pot distributed, penalties logged.</p>
           </li>
         </ol>
+      </section>
+
+      <section className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
+        <div className="flex flex-wrap items-center gap-3 text-slate-400">
+          <GitBranch className="h-4 w-4 text-soma-teal" />
+          Queue highlights
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {activeInquiries.map((inq) => (
+            <Link
+              to={`/inquiry/${inq.id}`}
+              key={inq.id}
+              className="group rounded-xl border border-slate-800/70 bg-slate-950/70 p-5 transition hover:border-soma-teal/60"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                <span className="font-mono">#{inq.id}</span>
+                <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] uppercase tracking-wide">
+                  {inq.status === "created" ? "Draft" : "Active"}
+                </span>
+              </div>
+              <h3 className="mt-3 text-base font-semibold text-slate-100 group-hover:text-soma-teal">
+                {inq.title}
+              </h3>
+              <p className="mt-2 line-clamp-3 text-sm text-slate-400">{inq.goal}</p>
+              <dl className="mt-4 space-y-2 text-xs text-slate-400">
+                <div className="flex justify-between">
+                  <dt>Total incentive</dt>
+                  <dd className="font-mono text-slate-200">{inq.totalIncentive.toFixed(3)} WETH</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Next initiation</dt>
+                  <dd className="font-mono text-slate-200">{inq.nextRequired.toFixed(3)} WETH</dd>
+                </div>
+              </dl>
+            </Link>
+          ))}
+        </div>
       </section>
     </div>
   );
